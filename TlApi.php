@@ -28,10 +28,18 @@ class TlApi {
     function get() {
         $this->timer_start();
         // Creates provider
-        if (@!$this->params['provider'])
-            throw new Exception('Missing provider param');
-        $provider = "Tl{$this->params['provider']}Provider";
-        $provider = new $provider($this->params);
+        $provider = @$this->params['provider'];
+        $providerClass = "Tl{$provider}Provider";
+        if (!$provider || !class_exists($providerClass)) {
+            throw new Exception(implode('', array(
+                $provider ? 'Invalid' : 'Missing',
+                " 'provider' parameter",
+                $provider ? " ('{$provider}'). " : '. ',
+                ' Valid providers are: ',
+                implode(', ', $this->list_providers()).'.'
+            )));
+        }
+        $provider = new $providerClass($this->params);
         // Creates data
         $response['data'] = $provider->get();
         // Creates meta
@@ -41,6 +49,14 @@ class TlApi {
         );
         // Returns response
         return json_encode($response);
+    }
+    
+    function list_providers() {
+        $classes = get_declared_classes();
+        $classes = array_filter($classes, function($name) { return preg_match('/^Tl\w+Provider$/i', $name); });
+        $providers = array_map(function($name) { return preg_replace('/^Tl(\w+)Provider$/i', '$1', $name); }, $classes);
+        $providers = array_map('strtolower', $providers);
+        return $providers;
     }
 }
 
@@ -99,7 +115,8 @@ abstract class TlProvider {
     abstract function get_data();
 }
 
-class TlFuzzyProvider extends TlProvider {
+// TODO: Debug before exposing
+class _TlFuzzyProvider extends TlProvider {
 
     function init() {
         $this->lines = new TlLinesProvider($this->params);
@@ -135,7 +152,8 @@ class TlFuzzyProvider extends TlProvider {
     }
 }
 
-class TlSuggestProvider extends TlProvider {
+// TODO: Debug before exposing
+class _TlSuggestProvider extends TlProvider {
 
     function init() {
         $this->lines = new TlLinesProvider($this->params);
@@ -180,6 +198,11 @@ class TlSuggestProvider extends TlProvider {
 class TlDeparturesProvider extends TlProvider {
 
     function init() {
+        if (!@$this->params['station']) throw new Exception(implode(' ', array(
+            "Missing 'station' parameter.",
+            "Use the 'stations' provider for available stations",
+            "(use station 'name' property)."
+        )));
         $stations = new TlStationsProvider($this->params);
         $stations = $stations->get();
         $this->stations = $stations;
@@ -252,6 +275,11 @@ class TlStationsProvider extends TlProvider {
 
     function make_url() {
         $line = $this->params['line'];
+        if (!$line) throw new Exception(implode(' ', array(
+            "Missing 'line' parameter.",
+            "Use the 'lines' provider for available lines",
+            "(use station 'id' property)."
+        )));
         return "http://www.t-l.ch/index.php?option=com_tl&task=get_arrets&Itemid=3&format=raw&choix=11&line={$line}";
     }
 
@@ -272,8 +300,8 @@ class TlStationsProvider extends TlProvider {
             preg_match_all('/<a.*?href=".*?\/.*?_.*?_(.*?).pdf ">(.*?)<\/a>/i', $data, $matches);
             for ($i=0; $i<count($matches[0]); $i++) {
                 $root = substr($matches[1][$i], 0, -2);
-                $stations[$root]['root'] = $root;
                 $stations[$root]['name'] = $matches[2][$i];
+                $stations[$root]['root'] = $root;
                 $stations[$root]["{$direction}"] = $matches[1][$i];
             }
         }
@@ -319,6 +347,8 @@ class TlEventsProvider extends TlProvider {
     }
 }
 
+
+// Data collector draft ////////////////////////////////////////////////////////
 
 abstract class TlCollector {
 
