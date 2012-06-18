@@ -15,6 +15,10 @@ $_REQUEST['line'] = @$_REQUEST['line'] ? $_REQUEST['line'] : 4;
 
       <div data-role="header">
         <h1>Select a Station</h1>
+        <div style="text-align:center; font-size:10px; background-color:#ff0; color:black; text-shadow:none">
+          Try the raw API
+          <a href="/tl/api" target="_blank">here</a>
+        </div>
       </div>
 
       <div data-role="content">
@@ -32,7 +36,7 @@ foreach ($lines as $line) {
         </div>
 
         <ul data-role="listview" data-inset="true" data-filter="true" id="stations">
-          <?php include('_stations.php'); ?>
+          <?php include('_stations.php'); ?>
         </ul>
 
       </div>

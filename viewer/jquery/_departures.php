@@ -34,10 +34,10 @@ foreach ($departures as $d) $directions[$d['direction']][] = $d;
     <style> h5 { margin:5px 10px 0px 15px } </style>
     <div class="ui-grid-a">
       <div class="ui-block-a">
-        <?php jlist($directions['A'], @$directions['A'][0]['destination']); ?>
+        <?php jlist($directions['A'], @$directions['A'][0]['destination']); ?>
       </div>
       <div class="ui-block-b">
-        <?php jlist($directions['R'], @$directions['R'][0]['destination']); ?>
+        <?php jlist($directions['R'], @$directions['R'][0]['destination']); ?>
       </div>
     </div>
 
